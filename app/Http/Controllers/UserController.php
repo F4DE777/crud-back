@@ -7,29 +7,47 @@ use App\User;
 use App\UserRolePivot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Controller;
 
 class UserController extends Controller
 {
-    public function  index(){
-        return  response()->json(User::all());
+//    public function  index(){
+//        return  response()->json(User::all());
+//    }
+
+//    public function __construct()
+//    {
+//        $this->middleware('auth:api', ['except' => ['login']]);
+//    }
+    public function me() {
+        return response()->json(auth('api')->user());
     }
 
     public function  login(){
         $data = request()->all();
+
+        if (!$token = auth()->attempt($data)) {
+            return response() -> json([
+                'status' => 'error'
+            ], 401);
+        }
+    else{
+
         $email = $data['email'];
         $password = $data['password'];
         $user = User::with(['rolePivot'])->where(['email'=>$email])->first();
-
         if(!is_null($user)){
             $piv = collect($user)->toArray();
             $piv = $piv['role_pivot']['role_id'];
             $permissions = Permission::where(['role_id'=>$piv])->get();
             if(Hash::check($password, $user->password)){
-                return json_encode([
-                'success'=>'Success',
-                'user'=>$user,
-                'permissions'=>$permissions,
-            ]);
+                return response()->json([
+                    'success'=>'Success',
+                    'user'=>$user,
+                    'permissions'=>$permissions,
+                    'token'=>$token
+
+                ]);
             }else{
                 return response()->json([
                     'error'=>'incorrect password',
@@ -40,11 +58,33 @@ class UserController extends Controller
                 'error'=>'User not found',
             ]);
         }
+    }
+
+
+
+
+
+//            $data = request(['email', 'password']);
+//            dd($data);
+//            if (! $token = auth()->attempt($data)) {
+//                return response()->json(['error' => 'Unauthorized'], 401);
+//            }
+//
+//            return $this->respondWithToken($token);
+
 
         // return response()->json([
         //     'userData' => $data;
         // ])
         // return  'hello';-
+    }
+
+    protected function respondWithToken($token)  {
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60
+        ]);
     }
 
     public function getUserData(){
@@ -193,6 +233,11 @@ class UserController extends Controller
 //    {
 //        dd('hshjfjjf');
 //    }
-};
+//};
 
 
+public function getAll (){
+    return response()->json([
+        'success'=>true,
+    ], 200);
+}}

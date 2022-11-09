@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,15 +20,18 @@ use Illuminate\Http\Request;
 //});
 
 
-Route::get('/', "UserController@index");
-
 Route::get('/login', "UserController@login");
-Route::get('/get-user-data', "UserController@getUserData");
-Route::get('/get-all-users', "UserController@getAllUsers");
-Route::post('/sign-up', "UserController@signUp");
-Route::post('/edit', "UserController@edit");
-Route::post('/delete', "UserController@delete");
 
+Route::group(['middleware' => 'jwt.auth','prefix' => 'auth'], function () {
+    Route::get('/get-user-data', "UserController@getUserData");
+    Route::get('/get-all-users', "UserController@getAllUsers");
+    Route::get('/get-all', "UserController@getAll");
+    Route::post('/sign-up', "UserController@signUp");
+    Route::post('/edit', "UserController@edit");
+    Route::post('/delete', "UserController@delete");
+    Route::post('me', 'UserController@me');
+    Route::get('/', "UserController@index");
 
+});
 
 
